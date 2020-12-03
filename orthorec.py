@@ -68,10 +68,10 @@ def orthorec(fin, fout, center, idx, idy, idz, pchunk):
         data0 = data[k*pchunk:min((k+1)*pchunk, ntheta)]
         time_read+=toc()
         tic()        
-        data_gpu = cp.array(data0).astype('float32')       	
-        time_gpucopy+=toc()
+        data_gpu = cp.array(data0).astype('float32')       	        
         theta_gpu = cp.array(
             theta[k*pchunk:min((k+1)*pchunk, ntheta)]).astype('float32')*cp.pi/180.0
+        time_gpucopy+=toc()
         # dark-flat field correction, -log, fix inf/nan, parzen filter, backprojection
         tic()
         data_gpu = darkflat_correction(data_gpu, dark_gpu, flat_gpu)        
@@ -81,12 +81,13 @@ def orthorec(fin, fout, center, idx, idy, idz, pchunk):
         time_proc+=toc()
 
     obj_gpu /= ntheta
-
+    print(cp.linalg.norm(obj_gpu))
     # save result as tiff
     dxchange.write_tiff(obj_gpu.get(), fout, overwrite=True)
     print('read from memory', time_read)
     print('copy to gpu', time_gpucopy)
     print('processing', time_proc)
+    print('Total', time_read+time_gpucopy+time_proc)
 
 if __name__ == "__main__":
     """Recover x,y,z ortho slices on GPU

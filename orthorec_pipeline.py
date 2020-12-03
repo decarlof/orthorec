@@ -8,7 +8,6 @@ import concurrent.futures
 import kernels
 from utils import tic,toc
 
-
 def backprojection(data, theta, center, idx, idy, idz):
     """Compute backprojection to orthogonal slices"""
     [nz, n] = data.shape[1:]
@@ -45,10 +44,14 @@ def fix_in_nan(data):
     data[cp.isinf(data)] = 0
 
 def read_data(data, theta, start, end):    
-    return data[start:end],theta[start:end]
+    data0 = data[start:end]
+    theta0 = theta[start:end]
+    return data0,theta0
 
 def gpu_copy(data,theta):
-    return cp.array(data).astype('float32'), cp.array(theta).astype('float32')         
+    data0 = cp.array(data).astype('float32')
+    theta0 = cp.array(theta).astype('float32')         
+    return data0,theta0
 
 def recon(data, dark, flat, theta, center, idx, idy, idz):
     data = darkflat_correction(data, dark, flat)        
@@ -72,30 +75,25 @@ def orthorec(fin, fout, center, idx, idy, idz, pchunk):
     flat_gpu = cp.mean(cp.array(flat), axis=0).astype('float32')
     # recover x,y,z orthoslices by projection chunks
     obj_gpu = cp.zeros([n, 3*n], dtype='float32')
-    time_read = 0 
-    time_gpucopy = 0 
-    time_proc = 0
-    data_part = np.zeros([2,pchunk,nz,n],dtype='uint8')
-    data_gpu = cp.zeros([2,pchunk,nz,n],dtype='float32')
-    theta_part = np.zeros([2,pchunk],dtype='float32')
-    theta_gpu = cp.zeros([2,pchunk],dtype='float32')
+    data_part = [None]*2
+    data_gpu = [None]*2
+    theta_part = [None]*2
+    theta_gpu = [None]*2
 
-    # obj_gpu += recon(data_gpu[0],dark_gpu,flat_gpu,theta_gpu[0],center,idx,idy,idz)        
     nchunk = int(cp.ceil(ntheta/pchunk))
     tic()
+    # pipeline with 3 threads for reading from memory/ copy to gpu/ processing
     with concurrent.futures.ThreadPoolExecutor(3) as executor:
         for k in range(0,nchunk+2):
-            # load data to GPU
+            # run 3 threads
             if(k<nchunk):
                 t1 = executor.submit(read_data, data,theta,k*pchunk,min((k+1)*pchunk, ntheta))
-            # data_part[0],theta_part[0] = read_data(data,theta,k*pchunk,min((k+1)*pchunk, ntheta))          
             if(k>0 and k<nchunk+1): 
                 t2 = executor.submit(gpu_copy, data_part[(k-1)%2],theta_part[(k-1)%2])
-            # data_gpu[0], theta_gpu[0] = gpu_copy(data_part[0],theta_part[0])
-            # dark-flat field correction, -log, fix inf/nan, parzen filter, backprojection
             if(k>1): 
                 t3 = executor.submit(recon, data_gpu[(k-1)%2],dark_gpu,flat_gpu,theta_gpu[(k-1)%2],center,idx,idy,idz)
-            # obj_gpu += recon(data_gpu[0],dark_gpu,flat_gpu,theta_gpu[0],center,idx,idy,idz)        
+
+            # gather results
             if(k<nchunk):
                 data_part[k%2],theta_part[k%2] = t1.result()
             if(k>0 and k<nchunk+1): 
@@ -106,10 +104,7 @@ def orthorec(fin, fout, center, idx, idy, idz, pchunk):
     print('Total:', toc())
     # save result as tiff
     dxchange.write_tiff(obj_gpu.get(), fout, overwrite=True)
-    # print('read from memory', time_read)
-    # print('copy to gpu', time_gpucopy)
-    # print('processing', time_proc)
-
+    
 if __name__ == "__main__":
     """Recover x,y,z ortho slices on GPU
     Parameters
