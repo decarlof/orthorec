@@ -5,6 +5,7 @@ import numpy as np
 import cupy as cp
 from cupyx.scipy.fft import rfft, irfft
 import kernels
+from utils import tic,toc
 
 
 def backprojection(data, theta, center, idx, idy, idz):
@@ -58,23 +59,34 @@ def orthorec(fin, fout, center, idx, idy, idz, pchunk):
 
     # recover x,y,z orthoslices by projection chunks
     obj_gpu = cp.zeros([n, 3*n], dtype='float32')
+    time_read = 0 
+    time_gpucopy = 0 
+    time_proc = 0
     for k in range(int(cp.ceil(ntheta/pchunk))):
         # load data to GPU
-        data_gpu = cp.array(
-            data[k*pchunk:min((k+1)*pchunk, ntheta)]).astype('float32')
+        tic()
+        data0 = data[k*pchunk:min((k+1)*pchunk, ntheta)]
+        time_read+=toc()
+        tic()        
+        data_gpu = cp.array(data0).astype('float32')       	
+        time_gpucopy+=toc()
         theta_gpu = cp.array(
             theta[k*pchunk:min((k+1)*pchunk, ntheta)]).astype('float32')*cp.pi/180.0
         # dark-flat field correction, -log, fix inf/nan, parzen filter, backprojection
+        tic()
         data_gpu = darkflat_correction(data_gpu, dark_gpu, flat_gpu)        
         data_gpu = minus_log(data_gpu)
         data_gpu = fbp_filter(data_gpu)
         obj_gpu += backprojection(data_gpu, theta_gpu, center, idx, idy, idz)
+        time_proc+=toc()
 
     obj_gpu /= ntheta
 
     # save result as tiff
     dxchange.write_tiff(obj_gpu.get(), fout, overwrite=True)
-
+    print('read from memory', time_read)
+    print('copy to gpu', time_gpucopy)
+    print('processing', time_proc)
 
 if __name__ == "__main__":
     """Recover x,y,z ortho slices on GPU
