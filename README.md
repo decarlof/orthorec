@@ -1,6 +1,10 @@
 # orthorec
 Reconstruction of x,y,z orthogonal slices on GPU
 
+# Dependencies
+cupy, h5py, dxchange
+
+# Execution
 ```
 python orthorec.py fin fout center idx idy idz pchunk
 ```
