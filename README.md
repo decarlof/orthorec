@@ -20,7 +20,7 @@ pchunk : int
     Size of a projection chunk (to fit data into GPU memory), 
     e.g., data size is (1500,2048,2448), pchunk=100 gives splitting data into chunks (100,2048,2448)
     that are processed sequentially by a GPU        
-``
+```
 Example of execution:        
 
 ```
