@@ -88,7 +88,7 @@ def orthorec(fin, center, idx, idy, idz, bin_level):
     center /= pow(2, bin_level)
 
     # init range of centers
-    center = cp.arange(center-20, center+20, 0.5).astype('float32')
+    center = cp.arange(center-40, center+40, 0.5).astype('float32')
 
     print('Try centers:', center)
 
@@ -143,7 +143,7 @@ def orthorec(fin, center, idx, idy, idz, bin_level):
     tic()
     obj = obj_gpu.get()
     for i in range(len(center)):
-        foutc = "%s/try_rec/r_%.2f" % (fin[:-3], center[i])
+        foutc = "%s/try_rec/bin%d/r_%.2f" % (fin[:-3], bin_level, center[i])
         dxchange.write_tiff(obj[i], foutc, overwrite=True)
     print('Time:', toc())
 

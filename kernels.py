@@ -9,21 +9,22 @@ extern "C" {
         if (ty >= n || tz >= nz)
             return;
         float sp = 0;
-        float spc = 0;
         int s0 = 0;
         int ind = 0;
-        for (int k = 0; k < ntheta; k++)
-        {
-            sp = (ix - n / 2) * __cosf(theta[k]) - (ty - n / 2) * __sinf(theta[k]); //polar coordinate
-            for (int i=0; i<ncenter; i++)
-            {    
-                spc = sp + center[i];
+        float f0 = 0;
+        for (int i=0; i<ncenter; i++)
+        {                
+            f0 = 0;            
+            for (int k = 0; k < ntheta; k++)
+            {
+                sp = (ix - n / 2) * __cosf(theta[k]) - (ty - n / 2) * __sinf(theta[k]) + center[i]; //polar coordinate
                 //linear interpolation
-                s0 = roundf(spc);            
+                s0 = roundf(sp);            
                 ind = k * n * nz + tz * n + s0;
                 if ((s0 >= 0) & (s0 < n - 1))
-                    f[i*n*nz + ty + tz * n] += g[ind] + (g[ind+1] - g[ind]) * (spc - s0) / n; 
+                    f0 += g[ind] + (g[ind+1] - g[ind]) * (sp - s0) / n; 
             }
+            f[i*n*nz + ty + tz * n] = f0;
         }
     }
     void __global__ orthoy(float *f, float *g, float *theta, float* center, int iy, int n, int nz, int ntheta, int ncenter)
@@ -36,20 +37,23 @@ extern "C" {
         float spc = 0;
         int s0 = 0;
         int ind = 0;
-        for (int k = 0; k < ntheta; k++)
-        {
-            sp = (tx - n / 2) * __cosf(theta[k]) - (iy - n / 2) * __sinf(theta[k]); //polar coordinate
-            for (int i=0; i<ncenter; i++)
+        float f0 = 0;
+        for (int i=0; i<ncenter; i++)
+        {            
+            f0 = 0;            
+            for (int k = 0; k < ntheta; k++)
             {
-                spc = sp + center[i];
+                sp = (tx - n / 2) * __cosf(theta[k]) - (iy - n / 2) * __sinf(theta[k]) + center[i]; //polar coordinate
                 //linear interpolation
-                s0 = roundf(spc);                        
+                s0 = roundf(sp);                        
                 ind = k * n * nz + tz * n + s0;
                 if ((s0 >= 0) & (s0 < n - 1))
-                    f[i*n*nz + tx + tz * n] += g[ind] + (g[ind+1] - g[ind]) * (spc - s0) / n; 
+                    f0 += g[ind] + (g[ind+1] - g[ind]) * (sp - s0) / n; 
             }
+            f[i*n*nz + tx + tz * n] = f0;
         }
     }
+
     void __global__ orthoz(float *f, float *g, float *theta, float* center, int iz, int n, int nz, int ntheta, int ncenter)
     {
         int tx = blockDim.x * blockIdx.x + threadIdx.x;
@@ -57,21 +61,22 @@ extern "C" {
         if (tx >= n || ty >= n)
             return;
         float sp = 0;
-        float spc = 0;
         int s0 = 0;
         int ind = 0;
-        for (int k = 0; k < ntheta; k++)
-        {
-            sp = (tx - n / 2) * __cosf(theta[k]) - (ty - n / 2) * __sinf(theta[k]); //polar coordinate
-            for (int i=0; i<ncenter; i++)
+        float f0 = 0;
+        for (int i=0; i<ncenter; i++)
+        {            
+            f0 = 0;            
+            for (int k = 0; k < ntheta; k++)
             {
-                spc = sp + center[i];            
+                sp = (tx - n / 2) * __cosf(theta[k]) - (ty - n / 2) * __sinf(theta[k]) + center[i]; //polar coordinate
                 //linear interpolation
-                s0 = roundf(spc);
+                s0 = roundf(sp);
                 ind = k * n * nz + iz * n + s0;
                 if ((s0 >= 0) & (s0 < n - 1))            
-                    f[i*n*n + tx + ty * n] += g[ind] + (g[ind+1] - g[ind]) * (spc - s0) / n; 
+                    f0 += g[ind] + (g[ind+1] - g[ind]) * (sp - s0) / n; 
             }
+            f[i*n*n + tx + ty * n] = f0;
         }
     }
 }
