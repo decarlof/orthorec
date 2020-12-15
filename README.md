@@ -6,7 +6,7 @@ cupy, h5py, dxchange
 
 # Execution
 ```
-python orthorec.py fin fout center idx idy idz bin_level
+python orthorec.py fin center idx idy idz bin_level
 ```
 
 ```
