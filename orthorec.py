@@ -7,6 +7,7 @@ from cupyx.scipy.fft import rfft, irfft
 import concurrent.futures
 import kernels
 import signal
+import os
 from utils import tic, toc
 
 
@@ -88,7 +89,7 @@ def orthorec(fin, center, idx, idy, idz, bin_level):
     center /= pow(2, bin_level)
 
     # init range of centers
-    center = cp.arange(center-40, center+40, 0.5).astype('float32')
+    center = cp.arange(center-20, center+20, 0.5).astype('float32')
 
     print('Try centers:', center)
 
@@ -98,16 +99,21 @@ def orthorec(fin, center, idx, idy, idz, bin_level):
     flat = fid['exchange/data_white']
     dark = fid['exchange/data_dark']
     theta = fid['exchange/theta']
-
+    ang = np.pi/12
     # compute mean of dark and flat fields on GPU
     dark_gpu = cp.mean(cp.array(dark), axis=0).astype('float32')
     flat_gpu = cp.median(cp.array(flat), axis=0).astype('float32')
     dark_gpu = binning(dark_gpu, bin_level)
     flat_gpu = binning(flat_gpu, bin_level)
-
     print('1. Read data from memory')
     tic()
     data = data[:]
+    theta = theta[:]
+    #ids = np.where((theta%np.pi>ang)*(theta%np.pi<np.pi-ang))[0]
+    #print(len(ids))
+    #data = data[ids]    
+    #theta = theta[ids]
+    
     print('Time:', toc())
 
     print('2. Reconstruction of orthoslices')
@@ -141,9 +147,11 @@ def orthorec(fin, center, idx, idy, idz, bin_level):
     # save result as tiff
     print('3. Cpu-gpu copy and save reconstructed orthoslices')
     tic()
+    
     obj = obj_gpu.get()
     for i in range(len(center)):
-        foutc = "%s/try_rec/bin%d/r_%.2f" % (fin[:-3], bin_level, center[i])
+        foutc = "%s_rec/vn/try_rec/%s/bin%d/r_%.2f" % (os.path.dirname(fin),os.path.basename(fin)[:-3], bin_level, center[i])
+        print(foutc)
         dxchange.write_tiff(obj[i], foutc, overwrite=True)
     print('Time:', toc())
 
@@ -171,7 +179,7 @@ if __name__ == "__main__":
         binning level
 
     Example of execution:        
-    python orthorec.py /local/data/423_coal5wtNaBr5p.h5 1224 512 512 512 100 1
+    python orthorec.py /local/data/423_coal5wtNaBr5p.h5 1224 512 512 512 1
     """
     # Set ^C interrupt to abort the scan
     signal.signal(signal.SIGINT, signal_handler)
