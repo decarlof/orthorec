@@ -81,7 +81,7 @@ def orthorec(fin, center, idx, idy, idz, bin_level):
     # projection chunk size to fit data to gpu memory
     # e.g., data size is (1500,2048,2448), pchunk=100 gives splitting data into chunks (100,2048,2448)
     # that are processed sequentially by one GPU
-    pchunk = 64  # fine for gpus with >=8GB memory
+    pchunk = 32  # fine for gpus with >=8GB memory
     # change pars wrt binning
     idx //= pow(2, bin_level)
     idy //= pow(2, bin_level)
@@ -149,10 +149,11 @@ def orthorec(fin, center, idx, idy, idz, bin_level):
     tic()
     
     obj = obj_gpu.get()
+    recpath = "%s_rec/vn/try_rec/%s/bin%d/" % (os.path.dirname(fin),os.path.basename(fin)[:-3], bin_level)
     for i in range(len(center)):
-        foutc = "%s_rec/vn/try_rec/%s/bin%d/r_%.2f" % (os.path.dirname(fin),os.path.basename(fin)[:-3], bin_level, center[i])
-        print(foutc)
+        foutc = "%s/r_%.2f" % (recpath,center[i])
         dxchange.write_tiff(obj[i], foutc, overwrite=True)
+    print('Out files: ', recpath)        
     print('Time:', toc())
 
     cp._default_memory_pool.free_all_blocks()
