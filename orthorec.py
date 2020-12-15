@@ -99,7 +99,6 @@ def orthorec(fin, center, idx, idy, idz, bin_level):
     flat = fid['exchange/data_white']
     dark = fid['exchange/data_dark']
     theta = fid['exchange/theta']
-    ang = np.pi/12
     # compute mean of dark and flat fields on GPU
     dark_gpu = cp.mean(cp.array(dark), axis=0).astype('float32')
     flat_gpu = cp.median(cp.array(flat), axis=0).astype('float32')
@@ -109,11 +108,6 @@ def orthorec(fin, center, idx, idy, idz, bin_level):
     tic()
     data = data[:]
     theta = theta[:]
-    #ids = np.where((theta%np.pi>ang)*(theta%np.pi<np.pi-ang))[0]
-    #print(len(ids))
-    #data = data[ids]    
-    #theta = theta[ids]
-    
     print('Time:', toc())
 
     print('2. Reconstruction of orthoslices')
