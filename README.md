@@ -6,14 +6,14 @@ cupy, h5py, dxchange
 
 # Execution
 ```
-python orthorec.py fin fout center idx idy idz pchunk
+python orthorec.py fin fout center idx idy idz bin_level
 ```
 
 ```
 Parameters
 ----------
 fin : str
-    Input h5 file.
+    Input h5 file
 center : float
     Rotation center
 idx,idy,idz : int
@@ -26,6 +26,6 @@ bin_level: int
 Example of execution:        
 
 ```
-python orthorec.py /local/data/423_coal5wtNaBr5p.h5 1224 512 512 512 100 1
+python orthorec.py /local/data/423_coal5wtNaBr5p.h5 1224 512 512 512 1
 ```
 
