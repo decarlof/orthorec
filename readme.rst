@@ -51,7 +51,7 @@ Usage
 
 	optional arguments:
 	  -h, --help        show this help message and exit
-      --bin-level       BIN_LEVEL
+          --bin-level       BIN_LEVEL
 	  --center CENTER   Output tiff file for 3 merged orthoslices (default: 1024)
 	  --fin FIN         Input h5 file (default: )
 	  --fout FOUT       Output tiff file for 3 merged orthoslices (default: )
