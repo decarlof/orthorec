@@ -2,8 +2,8 @@ import sys
 import dxchange
 import h5py
 import numpy as np
-# import cupy as cp
-# from cupyx.scipy.fft import rfft, irfft
+import cupy as cp
+from cupyx.scipy.fft import rfft, irfft
 import concurrent.futures
 import signal
 import os

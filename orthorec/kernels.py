@@ -1,4 +1,4 @@
-# import cupy as cp
+import cupy as cp
 
 source = """
 extern "C" {    
@@ -82,10 +82,10 @@ extern "C" {
 }
 """
 
-# module = cp.RawModule(code=source)
-# orthox_kernel = module.get_function('orthox')
-# orthoy_kernel = module.get_function('orthoy')
-# orthoz_kernel = module.get_function('orthoz')
+module = cp.RawModule(code=source)
+orthox_kernel = module.get_function('orthox')
+orthoy_kernel = module.get_function('orthoy')
+orthoz_kernel = module.get_function('orthoz')
 
 def orthox(data, theta, center, ix):
     """Reconstruct the ortho slice in x-direction on GPU"""
