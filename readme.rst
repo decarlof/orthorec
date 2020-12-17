@@ -3,7 +3,7 @@ ORTHOREC
 ========
 
 
-`orthorec <https://github.com/xray-imaging/orthorec>`_ is a Python script that performs a tomograhic reconstruction of x,y,z orthogonal slices on GPU.
+`orthorec <https://github.com/xray-imaging/orthorec>`_ is a Python script that performs a tomograhic reconstruction of x, y,z orthogonal slices on GPU.
 
 Dependencies
 ------------
@@ -53,13 +53,13 @@ Usage
 	  -h, --help        show this help message and exit
           --bin-level       BIN_LEVEL
 	  --center CENTER   Output tiff file for 3 merged orthoslices (default: 1024)
-	  --fin FIN         Input h5 file (default: )
-	  --fout FOUT       Output tiff file for 3 merged orthoslices (default: )
+	  --fin FIN         Input h5 file (default: None)
+	  --fout FOUT       Output tiff file for 3 merged orthoslices (default: None)
 	  --idx IDX         x ids of ortho slices (default: 512)
 	  --idy IDY         y ids of ortho slices (default: 512)
 	  --idz IDZ         z ids of ortho slices (default: 512)
-	  --pchunk PCHUNK   Size of a projection chunk (to fit data into GPU memory), e.g., data size is (1500,2048,2448), pchunk=100 gives splitting data into chunks
-	                    (100,2048,2448) that are processed sequentially by a GPU (default: 100)
+	  --pchunk PCHUNK   Size of a projection chunk (to fit data into GPU memory), e.g., data size is (1500,2048,2448), 
+	                    pchunk=32 gives splitting data into chunks (32,2048,2448) that are processed sequentially by a GPU (default: 32)
 	  --config FILE     File name of configuration (default: /Users/decarlo/orthorec.conf)
 	  --logs-home FILE  Log file directory (default: /Users/decarlo/logs)
 	  --verbose         Verbose output (default: True)
