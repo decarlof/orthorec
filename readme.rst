@@ -57,6 +57,19 @@ Usage
     $ orthorec show 
         Show the last used orthorec parameters
 
+    $ orthorec recon --fin /local/data/2020-12/Zenyuk/4_1_001.h5 --center 1250 --bin-level 2
+    2020-12-23 18:33:55,371 - Started orthorec
+    2020-12-23 18:33:55,372 - Saving log at /home/beams/TOMO/logs/orthorec_2020-12-23_18:33:55.log
+    2020-12-23 18:33:55,390 - Try centers from  307.500000 to 317.500000 in 0.125000 pixel
+    2020-12-23 18:33:55,390 - Center location and search windows are scaled by a binning factor of 2
+    2020-12-23 18:33:55,855 - 1. Read data from memory
+    2020-12-23 18:33:59,359 -       Time: 3.50 s
+    2020-12-23 18:33:59,360 - 2. Reconstruction of orthoslices
+    2020-12-23 18:34:08,244 -       Time: 8.88 s
+    2020-12-23 18:34:08,246 - 3. Cpu-gpu copy and save reconstructed orthoslices
+    2020-12-23 18:34:09,109 -       Time: 0.86 s
+    2020-12-23 18:34:09,109 - Out files: /local/data/2020-12/Zenyuk_rec/3D/try_rec/4_1_001/bin2/ 
+
     $ orthorec recon -h
     usage: orthorec recon [-h] [--bin-level BIN_LEVEL] [--center CENTER] [--center-search-step CENTER_SEARCH_STEP]
                           [--center-search-width CENTER_SEARCH_WIDTH] [--fin FIN] [--idx IDX] [--idy IDY] [--idz IDZ]
