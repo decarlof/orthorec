@@ -1,16 +1,18 @@
 #!/local/user2bmb/Software/anaconda/bin/python
 # -*- coding: utf-8 -*-
+import cupy as cp
 import os
 import re
 import sys
+import time
+import signal
 import argparse
 import pathlib
 import logging
-import time
 from datetime import datetime
 
-from orthorec import config
 from orthorec import log
+from orthorec import config
 from orthorec import orthorec
 
 __author__ = "Viktor Nikitin"
@@ -29,8 +31,14 @@ def show(args):
     config.show_config(args)
 
 def recon(args):
-    orthorec(args)
+    orthorec.orthorec(args)
+    config.write(args.config, args, sections=config.ORTHOREC_PARAMS)
 
+def signal_handler(sig, frame):
+    """Calls abort_scan when ^C is typed"""
+    cp._default_memory_pool.free_all_blocks()
+    log.error('Abort')
+    exit()
 
 def main():
     home = os.path.expanduser("~")
@@ -71,6 +79,10 @@ def main():
     # make sure logs directory exists
     if not os.path.exists(logs_home):
         os.makedirs(logs_home)
+
+    # Set ^C interrupt to abort the scan
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTSTP, signal_handler)
 
     try:
         args._func(args)

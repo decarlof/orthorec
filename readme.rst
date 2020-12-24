@@ -3,7 +3,7 @@ ORTHOREC
 ========
 
 
-`orthorec <https://github.com/xray-imaging/orthorec>`_ is a Python script that performs a tomograhic reconstruction of x, y,z orthogonal slices on GPU.
+`orthorec <https://github.com/xray-imaging/orthorec>`_ is a Python script that performs a tomograhic reconstruction of x, y, z orthogonal slices on GPU.
 
 Dependencies
 ------------
@@ -13,7 +13,18 @@ cupy, h5py, dxchange
 Installation
 ------------
 
-Install from `Anaconda <https://www.anaconda.com/distribution/>`_ python3.x, then install orthorec::
+First, you must have `Conda <https://docs.conda.io/en/latest/miniconda.html>`_
+installed.
+
+Next, create a new Conda environment called ``orthorec`` by running::
+
+    $ conda create --name orthorec
+
+and activate it::
+
+    $ conda activate orthorec
+
+then install the orthorec dependecies (cupy, h5py, dxchange) and orthorec::
 
     $ git clone https://github.com/xray-imaging/orthorec.git
     $ cd orthorec
@@ -46,20 +57,41 @@ Usage
     $ orthorec show 
         Show the last used orthorec parameters
 
-    $ orthorec recon -h
-	usage: orthorec recon [-h] [--center CENTER] [--fin FIN] [--fout FOUT] [--idx IDX] [--idy IDY] [--idz IDZ] [--pchunk PCHUNK] [--config FILE] [--logs-home FILE] [--verbose]
+    $ orthorec recon --fin /local/data/2020-12/Zenyuk/4_1_001.h5 --center 1250 --bin-level 2
+    2020-12-23 18:33:55,371 - Started orthorec
+    2020-12-23 18:33:55,372 - Saving log at /home/beams/TOMO/logs/orthorec_2020-12-23_18:33:55.log
+    2020-12-23 18:33:55,390 - Try centers from  307.500000 to 317.500000 in 0.125000 pixel
+    2020-12-23 18:33:55,390 - Center location and search windows are scaled by a binning factor of 2
+    2020-12-23 18:33:55,855 - 1. Read data from memory
+    2020-12-23 18:33:59,359 -       Time: 3.50 s
+    2020-12-23 18:33:59,360 - 2. Reconstruction of orthoslices
+    2020-12-23 18:34:08,244 -       Time: 8.88 s
+    2020-12-23 18:34:08,246 - 3. Cpu-gpu copy and save reconstructed orthoslices
+    2020-12-23 18:34:09,109 -       Time: 0.86 s
+    2020-12-23 18:34:09,109 - Out files: /local/data/2020-12/Zenyuk_rec/3D/try_rec/4_1_001/bin2/ 
 
-	optional arguments:
-	  -h, --help        show this help message and exit
-          --bin-level       BIN_LEVEL
-	  --center CENTER   Output tiff file for 3 merged orthoslices (default: 1024)
-	  --fin FIN         Input h5 file (default: None)
-	  --fout FOUT       Output tiff file for 3 merged orthoslices (default: None)
-	  --idx IDX         x ids of ortho slices (default: 512)
-	  --idy IDY         y ids of ortho slices (default: 512)
-	  --idz IDZ         z ids of ortho slices (default: 512)
-	  --pchunk PCHUNK   Size of a projection chunk (to fit data into GPU memory), e.g., data size is (1500,2048,2448), 
-	                    pchunk=32 gives splitting data into chunks (32,2048,2448) that are processed sequentially by a GPU (default: 32)
-	  --config FILE     File name of configuration (default: /Users/decarlo/orthorec.conf)
-	  --logs-home FILE  Log file directory (default: /Users/decarlo/logs)
-	  --verbose         Verbose output (default: True)
+    $ orthorec recon -h
+    usage: orthorec recon [-h] [--bin-level BIN_LEVEL] [--center CENTER] [--center-search-step CENTER_SEARCH_STEP]
+                          [--center-search-width CENTER_SEARCH_WIDTH] [--fin FIN] [--idx IDX] [--idy IDY] [--idz IDZ]
+                          [--pchunk PCHUNK] [--config FILE] [--logs-home FILE] [--verbose]
+
+
+    optional arguments:
+      -h, --help            show this help message and exit
+      --bin-level BIN_LEVEL
+                            binning level (default: 2)
+      --center CENTER       Output tiff file for 3 merged orthoslices (default: 1024)
+      --center-search-step CENTER_SEARCH_STEP
+                            Center search step size (pixel) (default: 0.5)
+      --center-search-width CENTER_SEARCH_WIDTH
+                            +/- center search width (pixel) (default: 20.0)
+      --fin FIN             Input hdf5 file (default: )
+      --idx IDX             x ids of ortho slices (default: 1024)
+      --idy IDY             y ids of ortho slices (default: 1024)
+      --idz IDZ             z ids of ortho slices (default: 1024)
+      --pchunk PCHUNK       Size of a projection chunk (to fit data into GPU memory), e.g., data size is (1500,2048,2448),
+                            pchunk=100 gives splitting data into chunks (100,2048,2448) that are processed sequentially by a GPU
+                            (default: 32)
+      --config FILE         File name of configuration (default: /home/beams/TOMO/orthorec.conf)
+      --logs-home FILE      Log file directory (default: /home/beams/TOMO/logs)
+      --verbose             Verbose output (default: True)
