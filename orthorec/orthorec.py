@@ -1,23 +1,25 @@
+import os
 import sys
 import dxchange
 import h5py
 import numpy as np
 import cupy as cp
-from cupyx.scipy.fft import rfft, irfft
 import concurrent.futures
-import signal
-import os
-from orthorec import kernels
+
+from cupyx.scipy.fft import rfft, irfft
+
+from orthorec import log
 from orthorec import utils
+from orthorec import kernels
 
 
 def backprojection(data, theta, args):
     """Compute backprojection to orthogonal slices"""
     [nz, n] = data.shape[1:]
-    obj = cp.zeros([len(args.center), n, 3*n], dtype='float32')
-    obj[:, :nz, :n] = kernels.orthox(data, theta, args.center, args.idx)
-    obj[:, :nz, n:2*n] = kernels.orthoy(data, theta, args.center, args.idy)
-    obj[:, :n, 2*n:3*n] = kernels.orthoz(data, theta, args.center, args.idz)
+    obj = cp.zeros([len(args.centers), n, 3*n], dtype='float32')
+    obj[:, :nz, :n] = kernels.orthox(data, theta, args.centers, args.idx_bin)
+    obj[:, :nz, n:2*n] = kernels.orthoy(data, theta, args.centers, args.idy_bin)
+    obj[:, :n, 2*n:3*n] = kernels.orthoz(data, theta, args.centers, args.idz_bin)
     return obj
 
 
@@ -63,7 +65,7 @@ def binning(data, args):
 def gpu_copy(data, theta, start, end, args):
     data_gpu = cp.array(data[start:end]).astype('float32')
     theta_gpu = cp.array(theta[start:end]).astype('float32')
-    data_gpu = binning(data_gpu, args.bin_level)
+    data_gpu = binning(data_gpu, args)
     return data_gpu, theta_gpu
 
 
@@ -72,7 +74,7 @@ def recon(data, dark, flat, theta, args):
     data = minus_log(data)
     data = fix_inf_nan(data)
     data = fbp_filter(data)
-    obj = backprojection(data, theta*cp.pi/180.0, args.center, args.idx, args.idy, args.idz)
+    obj = backprojection(data, theta*cp.pi/180.0, args)
     return obj
 
 
@@ -83,15 +85,18 @@ def orthorec(args):
     # that are processed sequentially by one GPU
     # args.pchunk = 32  # fine for gpus with >=8GB memory
     # change pars wrt binning
-    args.idx //= pow(2, args.bin_level)
-    args.idy //= pow(2, args.bin_level)
-    args.idz //= pow(2, args.bin_level)
-    args.center /= pow(2, args.bin_level)
+    args.idx_bin = args.idx // pow(2, args.bin_level)
+    args.idy_bin = args.idy // pow(2, args.bin_level)
+    args.idz_bin = args.idz // pow(2, args.bin_level)
+    center =  args.center / pow(2, args.bin_level)
+    center_search_width = args.center_search_width / pow(2, args.bin_level)
+    center_search_step = args.center_search_step / pow(2, args.bin_level)
 
-    # init range of args.centers
-    args.center = cp.arange(args.center-20, args.center+20, 0.5).astype('float32')
-
-    print('Try args.centers:', args.center)
+    # init range of centerss
+    args.centers = cp.arange(center-center_search_width, center+center_search_width, center_search_step).astype('float32')
+    log.info('Try centers from  %f to %f in %f pixel' % (center-center_search_width, center+center_search_width, center_search_step))
+    if (args.bin_level > 0):
+        log.warning('Center location and search windows are scaled by a binning factor of %d' % (args.bin_level))
 
     # init pointers to dataset in the h5 file
     fid = h5py.File(args.fin, 'r')
@@ -102,19 +107,19 @@ def orthorec(args):
     # compute mean of dark and flat fields on GPU
     dark_gpu = cp.mean(cp.array(dark), axis=0).astype('float32')
     flat_gpu = cp.median(cp.array(flat), axis=0).astype('float32')
-    dark_gpu = binning(dark_gpu, args.bin_level)
-    flat_gpu = binning(flat_gpu, args.bin_level)
-    print('1. Read data from memory')
+    dark_gpu = binning(dark_gpu, args)
+    flat_gpu = binning(flat_gpu, args)
+    log.info('1. Read data from memory')
     utils.tic()
     data = data[:]
     theta = theta[:]
-    print('Time:', utils.toc())
+    log.info('      Time: %3.2f s', utils.toc())
 
-    print('2. Reconstruction of orthoslices')
+    log.info('2. Reconstruction of orthoslices')
     utils.tic()
     # recover x,y,z orthoslices by projection chunks, merge them in one image
     # reconstruction pipeline consists of 2 threads for processing and for cpu-gpu data transfer
-    obj_gpu = cp.zeros([len(args.center), data.shape[2]//pow(2, args.bin_level),
+    obj_gpu = cp.zeros([len(args.centers), data.shape[2]//pow(2, args.bin_level),
                         3*data.shape[2]//pow(2, args.bin_level)], dtype='float32')
     nchunk = int(cp.ceil(data.shape[0]/args.pchunk))
     data_gpu = [None]*2
@@ -124,11 +129,11 @@ def orthorec(args):
             # thread for cpu-gpu copy
             if(k < nchunk):
                 t2 = executor.submit(
-                    gpu_copy, data, theta, k*args.pchunk, min((k+1)*args.pchunk, data.shape[0]), args.bin_level)
+                    gpu_copy, data, theta, k*args.pchunk, min((k+1)*args.pchunk, data.shape[0]), args)
             # thread for processing
             if(k > 1):
                 t3 = executor.submit(recon, data_gpu[(
-                    k-1) % 2], dark_gpu, flat_gpu, theta_gpu[(k-1) % 2], args.center, args.idx, args.idy, args.idz)
+                    k-1) % 2], dark_gpu, flat_gpu, theta_gpu[(k-1) % 2], args)
 
             # gather results from 2 threads
             if(k < nchunk):
@@ -137,54 +142,17 @@ def orthorec(args):
                 obj_gpu += t3.result()
 
     obj_gpu /= data.shape[0]
-    print('Time:', utils.toc())
+    log.info('      Time: %3.2f s', utils.toc())
     # save result as tiff
-    print('3. Cpu-gpu copy and save reconstructed orthoslices')
+    log.info('3. Cpu-gpu copy and save reconstructed orthoslices')
     utils.tic()
     
     obj = obj_gpu.get()
-    recpath = "%s_rec/vn/try_rec/%s/bin%d/" % (os.path.dirname(fin),os.path.basename(fin)[:-3], args.bin_level)
-    for i in range(len(args.center)):
-        foutc = "%s/r_%.2f" % (recpath,args.center[i])
+    recpath = "%s_rec/3D/try_rec/%s/bin%d/" % (os.path.dirname(args.fin),os.path.basename(args.fin)[:-3], args.bin_level)
+    for i in range(len(args.centers)):
+        label = (args.center - args.center_search_width) + (center_search_step * pow(2, args.bin_level) * i)
+        foutc = "%s/r_%.2f" % (recpath, label)
         dxchange.write_tiff(obj[i], foutc, overwrite=True)
-    print('Out files: ', recpath)        
-    print('Time:', utils.toc())
-
+    log.info('      Time: %3.2f s', utils.toc())
+    log.info('Out files: %s ', recpath)
     cp._default_memory_pool.free_all_blocks()
-
-
-def signal_handler(sig, frame):
-    """Calls abort_scan when ^C is typed"""
-    cp._default_memory_pool.free_all_blocks()
-    print('Abort')
-    exit()
-
-
-if __name__ == "__main__":
-    """Recover x,y,z ortho slices on GPU
-    Parameters
-    ----------
-    fin : str
-        Input h5 file.
-    args.center : float
-        Rotation args.center
-    args.idx,args.idy,args.idz : int
-        x,y,z ids of ortho slices
-    args.bin_level: int
-        binning level
-
-    Example of execution:        
-    python orthorec.py /local/data/423_coal5wtNaBr5p.h5 1224 512 512 512 1
-    """
-    # Set ^C interrupt to abort the scan
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTSTP, signal_handler)
-
-    fin = sys.argv[1]
-    args.center = cp.float32(sys.argv[2])
-    args.idx = cp.int32(sys.argv[3])
-    args.idy = cp.int32(sys.argv[4])
-    args.idz = cp.int32(sys.argv[5])
-    args.bin_level = cp.int32(sys.argv[6])
-
-    orthorec(fin, args.center, args.idx, args.idy, args.idz, args.bin_level)

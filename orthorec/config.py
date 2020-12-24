@@ -32,26 +32,30 @@ SECTIONS['orthorec'] = {
     'fin': { 
         'type': str,
         'default': '',
-        'help': 'Input h5 file'},
-    'fout': { 
-        'type': str,
-        'default': '',
-        'help': 'Output tiff file for 3 merged orthoslices'},
+        'help': 'Input hdf5 file'},
     'center': { 
         'type': float,
         'default': 1024,
         'help': 'Output tiff file for 3 merged orthoslices'},
+    'center-search-width': {
+        'type': float,
+        'default': 20.0,
+        'help': "+/- center search width (pixel)"},
+    'center-search-step': {
+        'type': float,
+        'default': 0.5,
+        'help': "Center search step size (pixel)"},
     'idx': { 
         'type': int,
-        'default': 512,
+        'default': 1024,
         'help': 'x ids of ortho slices'},
     'idy': { 
         'type': int,
-        'default': 512,
+        'default': 1024,
         'help': 'y ids of ortho slices'},
     'idz': { 
         'type': int,
-        'default': 512,
+        'default': 1024,
         'help': 'z ids of ortho slices'},
     'bin-level': { 
         'type': int,
@@ -166,7 +170,7 @@ def write(config_file, args=None, sections=None):
             if args and sections and section in sections and hasattr(args, name.replace('-', '_')):
                 value = getattr(args, name.replace('-', '_'))
                 if isinstance(value, list):
-                    print(type(value), value)
+                    # print(type(value), value)
                     value = ', '.join(value)
             else:
                 value = opts['default'] if opts['default'] is not None else ''
