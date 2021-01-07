@@ -4,7 +4,9 @@ import pathlib
 import argparse
 import configparser
 import numpy as np
+from pathlib import Path
 from collections import OrderedDict
+
 from orthorec import log
 
 LOGS_HOME = pathlib.Path.home()/'logs'
@@ -29,14 +31,15 @@ SECTIONS['general'] = {
         'action': 'store_true'}}
 
 SECTIONS['orthorec'] = {
-    'fin': { 
-        'type': str,
-        'default': '',
-        'help': 'Input hdf5 file'},
+    'file-name': {
+        'default': '.',
+        'type': Path,
+        'help': "Name of the last used hdf file or directory containing multiple hdf files",
+        'metavar': 'PATH'},
     'center': { 
         'type': float,
         'default': 1024,
-        'help': 'Output tiff file for 3 merged orthoslices'},
+        'help': 'Center seach start location (pixel)'},
     'center-search-width': {
         'type': float,
         'default': 20.0,
@@ -48,15 +51,15 @@ SECTIONS['orthorec'] = {
     'idx': { 
         'type': int,
         'default': 1024,
-        'help': 'x ids of ortho slices'},
+        'help': 'Index of the X ortho slice to reconstruct (pixel)'},
     'idy': { 
         'type': int,
         'default': 1024,
-        'help': 'y ids of ortho slices'},
+        'help': 'Index of the Y ortho slice to reconstruct (pixel)'},
     'idz': { 
         'type': int,
         'default': 1024,
-        'help': 'z ids of ortho slices'},
+        'help': 'Index of the Z ortho slice to reconstruct (pixel)'},
     'bin-level': { 
         'type': int,
         'default': 2,
