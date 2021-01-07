@@ -106,6 +106,7 @@ To run a different data set with the same parameters::
     $ orthorec recon --file-name /local/data/2020-12/Zenyuk/4_1_002.h5
 
 To run a folder of data sets with the same parameters::
+
     $ orthorec recon --file-name /local/data/2020-12/Zenyuk/
     2021-01-06 18:19:48,977 - Started orthorec
     2021-01-06 18:19:48,977 - Saving log at /home/beams/TOMO/logs/orthorec_2021-01-06_18:19:48.log
