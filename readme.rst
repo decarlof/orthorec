@@ -4,7 +4,7 @@ Orthorec
 
 `orthorec <https://github.com/xray-imaging/orthorec>`_ reconstructs 3 orthogonal slices in position (idx, idy, idz) with multiple position of the rotation axis center as set by (center, center-search-step, center-search-width) ::
 
-The output of **orthorec** is a series of 3 orthogonal slices that can be loaded as a stack in imageJ to determine the best rotation axis location:
+The output of **orthorec** is a series of 3 orthogonal slices that can be loaded as a stack in imageJ to determine the best rotation axis location while looking simultaneously at the 3 slices:
 
 .. image:: docs/source/img/orthorec.png
     :width: 50%
