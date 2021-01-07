@@ -89,7 +89,7 @@ Usage
 Example
 -------
 
-Reconstruct 3 orthogonal slices in position (idx, idy, idz) with multiple position of the rotation axis center (center, center-search-step, center-search-width) ::
+Reconstruct 3 orthogonal slices in position (idx, idy, idz) with multiple position of the rotation axis center (center, center-search-step, center-search-width)::
 
     $ orthorec recon --file-name /local/data/2020-12/Zenyuk/4_1_001.h5 --idx 1024 --idy 1024 --idz 1024 --center 1250 --center-search-step 0.5 --center-search-width 20 --bin-level 2
     2021-01-06 17:46:00,648 - Started orthorec
@@ -103,6 +103,7 @@ Reconstruct 3 orthogonal slices in position (idx, idy, idz) with multiple positi
     2021-01-06 17:46:14,287 - Output files: /local/data/2020-12/Zenyuk_rec/3D/try_rec/4_1_001/bin2/ 
 
 To run a different data set with the same parameters::
+
     $ orthorec recon --file-name /local/data/2020-12/Zenyuk/4_1_002.h5
 
 To run a folder of data sets with the same parameters::
