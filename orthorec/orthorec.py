@@ -106,7 +106,7 @@ def orthorec(args):
     theta = fid['exchange/theta']
     # compute mean of dark and flat fields on GPU
     dark_gpu = cp.mean(cp.array(dark), axis=0).astype('float32')
-    flat_gpu = cp.median(cp.array(flat), axis=0).astype('float32')
+    flat_gpu = cp.mean(cp.array(flat), axis=0).astype('float32')
     dark_gpu = binning(dark_gpu, args)
     flat_gpu = binning(flat_gpu, args)
     log.info('1. Read data from memory')
